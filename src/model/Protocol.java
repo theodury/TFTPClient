@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package tftpclient;
+package model;
 
 /**
  *
@@ -10,6 +10,7 @@ package tftpclient;
  */
 public class Protocol {
 
+	final static public int PORT = 69;
 	final static public int BUFFER_SIZE = 514;
 	final static public int OPCODE_SIZE = 2;
 	final static public int ERRCODE_SIZE = 2;

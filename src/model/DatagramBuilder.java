@@ -1,13 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package tftpclient;
+package model;
 
 /**
  *
  * @author tom
  */
+/*
 public class DatagramBuilder {
 
 	static public byte[] requestPacket(Protocol.OpCode opCode, String filename, Protocol.Mode mode) {
@@ -54,3 +51,4 @@ public class DatagramBuilder {
 		return sb.toString();
 	}
 }
+//*/
