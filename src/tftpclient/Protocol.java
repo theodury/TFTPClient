@@ -11,6 +11,9 @@ package tftpclient;
 public class Protocol {
 
 	final static public int BUFFER_SIZE = 514;
+	final static public int OPCODE_SIZE = 2;
+	final static public int ERRCODE_SIZE = 2;
+	final static public int BLOCKNUM_SIZE = 2;
 
 	static public enum OpCode {
 
