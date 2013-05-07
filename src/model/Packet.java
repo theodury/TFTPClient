@@ -19,7 +19,7 @@ abstract public class Packet {
 		String valueStr = String.format(format, value);
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < bytesCount; ++i) {
-			sb.append("\\").append(valueStr.charAt(i));
+			sb.append(Integer.valueOf(valueStr.charAt(i)));
 		}
 		return sb.toString();
 	}

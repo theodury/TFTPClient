@@ -55,7 +55,7 @@ public class FileTransferManager {
 		try {
 			DatagramSocket ds = new DatagramSocket();
 
-			byte packet[] = new RequestPacket(Protocol.OpCode.RRQ, filename, mode).getBytes();
+			byte packet[] = new ReadRequestPacket(filename, mode).getBytes();
 			DatagramPacket dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
 			DatagramPacket dpIn = new DatagramPacket(buffer, Protocol.BUFFER_SIZE);
 			ds.send(dpOut);
