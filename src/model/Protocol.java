@@ -18,18 +18,18 @@ public class Protocol {
 
 	static public enum OpCode {
 
-		RRQ(1), // Read request
-		WRQ(2), // Write request
-		DATA(3), // Data
-		ACK(4), // Acknoledgment
-		ERR(5); // Error
-		private int val;
+		RRQ((short)1), // Read request
+		WRQ((short)2), // Write request
+		DATA((short)3), // Data
+		ACK((short)4), // Acknoledgment
+		ERR((short)5); // Error
+		private short val;
 
-		OpCode(int val) {
+		OpCode(short val) {
 			this.val = val;
 		}
 
-		public int v() {
+		public short v() {
 			return val;
 		}
 	};
@@ -47,21 +47,21 @@ public class Protocol {
 
 	static public enum ErrCode {
 
-		UNDEFINED(0), // Not defined, see error message
-		NOTFOUND(1), // File not found
-		NOACCESS(2), // Access violation
-		DISKFULL(3), // Disk full or allocation exceeded
-		OPERATION(4), // Illegal TFTP operation
-		TRANSFERID(5), // Unknown transfer ID
-		FILEEXISTS(6), // File already exists
-		NOUSER(7); // No such user
-		private int val;
+		UNDEFINED((short)0), // Not defined, see error message
+		NOTFOUND((short)1), // File not found
+		NOACCESS((short)2), // Access violation
+		DISKFULL((short)3), // Disk full or allocation exceeded
+		OPERATION((short)4), // Illegal TFTP operation
+		TRANSFERID((short)5), // Unknown transfer ID
+		FILEEXISTS((short)6), // File already exists
+		NOUSER((short)7); // No such user
+		private short val;
 
-		ErrCode(int val) {
+		ErrCode(short val) {
 			this.val = val;
 		}
 
-		public int v() {
+		public short v() {
 			return val;
 		}
 	};
