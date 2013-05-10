@@ -12,6 +12,7 @@ public class Protocol {
 
 	final static public int PORT = 69;
 	final static public int BUFFER_SIZE = 514;
+	final static public int DATA_SIZE = 512;
 	final static public int OPCODE_SIZE = 2;
 	final static public int ERRCODE_SIZE = 2;
 	final static public int BLOCKNUM_SIZE = 2;

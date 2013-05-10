@@ -24,6 +24,8 @@ import java.util.logging.Logger;
  */
 public class FileTransferManager {
 
+	public static int SEND_COUNTER = 3;
+	
 	private int _port;
 	private InetAddress _destination;
 
@@ -82,8 +84,8 @@ public class FileTransferManager {
 					// --- Lecture du fichier --- //
 					byteCount = stream.available();
 					System.out.println(byteCount);
-					if(byteCount > 512){
-						byteCount = 512;
+					if(byteCount > Protocol.DATA_SIZE){
+						byteCount = Protocol.DATA_SIZE;
 					}
 					data = new byte[byteCount];
 
@@ -121,7 +123,7 @@ public class FileTransferManager {
 					
 					block = ack.getBlockNumber();
 					System.out.println("\t" + byteCount);
-				} while(byteCount == 512);
+				} while(byteCount == Protocol.DATA_SIZE);
 			}
 			System.out.println();
 			/*System.out.println(packet[0]);
@@ -189,7 +191,7 @@ public class FileTransferManager {
 			}
 			catch(SocketTimeoutException exc){
 				++sendCounter;
-				if(sendCounter > 3){
+				if(sendCounter > FileTransferManager.SEND_COUNTER){
 					throw exc;
 				}
 				sendBack = true;

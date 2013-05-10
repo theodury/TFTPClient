@@ -37,9 +37,11 @@ public class TFTPClient {
 		//*/
 		//*
 		try {
-			FileTransferManager ftm = new FileTransferManager(InetAddress.getLocalHost());
+			InetAddress destination = InetAddress.getLocalHost();
 			
-			ftm.sendFile("D:\\Mes Documents\\Mes Images\\Wallpapers\\ba47dd5d51587985afdffdfdb50ba1e1.png", Protocol.Mode.OCTET);
+			FileTransferManager ftm = new FileTransferManager(destination);
+			
+			ftm.sendFile("D:\\Mes Documents\\Mes Images\\Wallpapers\\ba47dd5d51587985afdffdfdb50ba1e1.png", Protocol.Mode.NETASCII);
 			//ftm.sendFile("D:\\Mes Documents\\Mes Images\\NiarK.bmp", Protocol.Mode.NETASCII);
 			//ftm.sendFile("D:\\Mes Documents\\GitHub\\TFTPFile\\client\\test2.txt", Protocol.Mode.OCTET);
 			
