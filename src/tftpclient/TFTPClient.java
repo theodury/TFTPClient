@@ -1,6 +1,9 @@
 package tftpclient;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -37,7 +40,7 @@ public class TFTPClient {
 		//*/
 		//*
 		try {
-			InetAddress destination = InetAddress.getLocalHost();
+			InetAddress destination = InetAddress.getByName("78.127.240.112");
 			
 			FileTransferManager ftm = new FileTransferManager(destination);
 			
@@ -47,7 +50,16 @@ public class TFTPClient {
 			
 		} catch (UnknownHostException ex) {
 			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (FileNotFoundException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (SocketException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (IOException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (TFTPErrorException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
 		}
+		
 		//*/
 		
 	}

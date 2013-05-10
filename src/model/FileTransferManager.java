@@ -35,10 +35,10 @@ public class FileTransferManager {
 	}
 	//*
 
-	public int sendFile(String filepath, Protocol.Mode mode) {
+	public int sendFile(String filepath, Protocol.Mode mode) throws FileNotFoundException, SocketException, IOException, TFTPErrorException {
 
 
-		try {
+		//try {
 			
 			//  --- ouverture du fichier --- //
 			File file = new File(filepath);
@@ -51,7 +51,7 @@ public class FileTransferManager {
 			short block;
 			boolean sendBack;
 			
-			DatagramSocket socket = new DatagramSocket();
+			DatagramSocket socket = new DatagramSocket(69);
 
 			byte packet[] = new WriteRequestPacket(file.getName(), mode).getBytes();
 			
@@ -68,8 +68,10 @@ public class FileTransferManager {
 			Packet response = PacketFactory.toPacket(dpIn.getData());
 			// --- gestion des erreurs --- //
 			if(response.getOpCode() == Protocol.OpCode.ERR) {
-				//TODO: gestion de l'erreur
-				return response.getOpCode().v();
+				
+				ErrorPacket err = (ErrorPacket)response;
+				
+				throw new TFTPErrorException(err.getErrCode().v(), err.getErrMsg());
 			}
 			// --- gestion de l'acquittement --- //
 			else if(response.getOpCode() == Protocol.OpCode.ACK) {
@@ -105,9 +107,10 @@ public class FileTransferManager {
 
 
 						if(response.getOpCode() == Protocol.OpCode.ERR) {
-							ErrorPacket ep = (ErrorPacket)response;
-							System.out.println(ep.getErrMsg());
-							return ep.getErrCode().v();
+							
+							ErrorPacket err = (ErrorPacket)response;
+
+							throw new TFTPErrorException(err.getErrCode().v(), err.getErrMsg());
 						}
 						else if (response.getOpCode() == Protocol.OpCode.ACK){
 							ack = (AcknowledgmentPacket)PacketFactory.toPacket(dpIn.getData());
@@ -141,7 +144,7 @@ public class FileTransferManager {
 			socket.close();
 			stream.close();
 			
-		} catch (SocketTimeoutException e){
+		/*} catch (SocketTimeoutException e){
 			
 		} catch (SocketException e) {
 			//TODO: log
@@ -149,7 +152,7 @@ public class FileTransferManager {
 			Logger.getLogger(FileTransferManager.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (IOException ex) {
 			Logger.getLogger(FileTransferManager.class.getName()).log(Level.SEVERE, null, ex);
-		}
+		}*/
 		
 		
 		
@@ -186,6 +189,7 @@ public class FileTransferManager {
 		do {
 			sendBack = false;
 			socket.send(dpOut);
+			System.out.println(socket.getPort());
 			try {
 				socket.receive(dpIn);
 			}
