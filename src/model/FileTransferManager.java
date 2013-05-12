@@ -56,8 +56,6 @@ public class FileTransferManager extends Observable {
 			byte packet[] = new WriteRequestPacket(file.getName(), mode).getBytes();
 			DatagramPacket dpOut = new DatagramPacket(packet, packet.length, this._destination, port);
 			DatagramPacket dpIn = new DatagramPacket(buffer, buffer.length);
-			System.out.println(packet[0]);
-			System.out.println(packet[1]);
 			
 			String message = "Transfert of '" + file.getName() + "'.";
 				this.setChanged();
@@ -90,7 +88,7 @@ public class FileTransferManager extends Observable {
 				do {
 					// --- Lecture du fichier --- //
 					byteCount = stream.available();
-					System.out.println(byteCount);
+					
 					if(byteCount > Protocol.DATA_SIZE){
 						byteCount = Protocol.DATA_SIZE;
 					}
@@ -98,7 +96,9 @@ public class FileTransferManager extends Observable {
 
 					stream.read(data, 0, byteCount);
 
-					packet = new DataPacket((short)(block + 1), data).getBytes();
+					DataPacket dp = new DataPacket((short)(block + 1), data);
+					dp.setMode(mode);
+					packet = dp.getBytes();
 					dpOut = new DatagramPacket(packet, packet.length, this._destination, port);
 					
 					// --- Envoie --- //
@@ -124,13 +124,10 @@ public class FileTransferManager extends Observable {
 							}
 						}
 						
-
-						System.out.println(ack.getBlockNumber());
-						System.out.println(block+1);
 					} while(sendBack);
 					
 					block = ack.getBlockNumber();
-					System.out.println("\t" + byteCount);
+					
 				} while(byteCount == Protocol.DATA_SIZE);
 			}
 			
@@ -139,24 +136,19 @@ public class FileTransferManager extends Observable {
 			this.setChanged();
 			this.notifyObservers(message);
 			
-			System.out.println();
-			/*System.out.println(packet[0]);
-			System.out.println(packet[1]);
-			System.out.println(packet[2]);
-			System.out.println(packet[3]);
-			System.out.println(packet[4]);
-			System.out.println(packet[5]);*/
-			System.out.println(dpIn.getData()[0]);
-			System.out.println(dpIn.getData()[1]);
-			System.out.println(dpIn.getData()[2]);
-			System.out.println(dpIn.getData()[3]);
 			socket.close();
 			
 		} 
+		 /*catch (Exception ex) {
+			//ex.printStackTrace();
+			String message = "Transfert of '"+ file.getName() +"' - Error : " + ex.getMessage();
+			
+			this.setChanged();
+			this.notifyObservers(message);
+		}*/
 		catch (FileNotFoundException ex) {
 			String message = "Error : " + ex.getMessage();
 			
-			System.out.println(file.getPath());
 			
 			this.setChanged();
 			this.notifyObservers(message);
@@ -222,7 +214,7 @@ public class FileTransferManager extends Observable {
 		do {
 			sendBack = false;
 			socket.send(dpOut);
-			System.out.println(socket.getPort());
+			
 			try {
 				socket.receive(dpIn);
 				
