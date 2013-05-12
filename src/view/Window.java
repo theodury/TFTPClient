@@ -198,7 +198,6 @@ public final class Window extends JFrame implements Observer, ActionListener {
 			if (_txt_PathSend.getText().length() != 0) {
 				//if (_txt_PathServerSend.getText().length() != 0) {
 					if (Window.validIP(_txt_IPSend.getText())) {
-						this.write("Nice!");
 						_controller.send(_txt_PathSend.getText(), _txt_IPSend.getText());
 					} else {
 						this.write("L'adresse IP n'est pas valide.");

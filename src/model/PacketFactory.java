@@ -45,9 +45,13 @@ public class PacketFactory {
 			
 			Protocol.ErrCode errorCode = Protocol.ErrCode.values()[Packet.getCode(buffer[2], buffer[3])];
 			
-			String message = new String(Arrays.copyOfRange(buffer, 4, buffer.length - 1));
+			StringBuilder message = new StringBuilder();
+			for( int i = 4; i< buffer.length && buffer[i] != 0; ++i) {
+				message.append((char)(buffer[i]));
+				
+			}
 			
-			packet = new ErrorPacket(errorCode, message);
+			packet = new ErrorPacket(errorCode, message.toString());
 		}
 		
 		return packet;

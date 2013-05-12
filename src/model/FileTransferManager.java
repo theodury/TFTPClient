@@ -58,6 +58,11 @@ public class FileTransferManager extends Observable {
 			DatagramPacket dpIn = new DatagramPacket(buffer, buffer.length);
 			System.out.println(packet[0]);
 			System.out.println(packet[1]);
+			
+			String message = "Transfert of '" + file.getName() + "'.";
+				this.setChanged();
+				this.notifyObservers(message);
+			
 			// --- Envoie de la demande d'écriture --- //
 			socket.setSoTimeout(5000);
 			this.send(socket, dpOut, dpIn);
@@ -76,7 +81,7 @@ public class FileTransferManager extends Observable {
 				port = dpIn.getPort();
 				block = ack.getBlockNumber();
 				
-				String message = "Transfert of '" + file.getName() + "' has begun";
+				message = "Transfert of '" + file.getName() + "' has begun";
 				this.setChanged();
 				this.notifyObservers(message);
 				
@@ -129,7 +134,7 @@ public class FileTransferManager extends Observable {
 				} while(byteCount == Protocol.DATA_SIZE);
 			}
 			
-			String message = "Transfert of '" + file.getName() + "' has successfully completed.";
+			message = "Transfert of '" + file.getName() + "' has successfully completed.";
 			
 			this.setChanged();
 			this.notifyObservers(message);
@@ -151,12 +156,14 @@ public class FileTransferManager extends Observable {
 		catch (FileNotFoundException ex) {
 			String message = "Error : " + ex.getMessage();
 			
+			System.out.println(file.getPath());
+			
 			this.setChanged();
 			this.notifyObservers(message);
 		} 
 		catch (IOException ex) {
 			
-			String message = "Error : " + ex.getMessage();
+			String message = "Transfert of '"+ file.getName() +"' - Error : " + ex.getMessage();
 			
 			this.setChanged();
 			this.notifyObservers(message);
@@ -170,7 +177,7 @@ public class FileTransferManager extends Observable {
 			
 		} catch (Exception ex) {
 			
-			String message = "Error : " + ex.getMessage();
+			String message = "Transfert of '"+ file.getName() +"' - Error : " + ex.getMessage();
 			
 			this.setChanged();
 			this.notifyObservers(message);
