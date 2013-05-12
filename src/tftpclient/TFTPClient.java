@@ -9,7 +9,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import model.*;
+import view.Window;
 
 /**
  *
@@ -38,7 +42,7 @@ public class TFTPClient {
 		   System.out.println(b);
 		}
 		//*/
-		//*
+		/*
 		try {
 			InetAddress destination = InetAddress.getByName("78.127.240.112");
 			
@@ -50,17 +54,25 @@ public class TFTPClient {
 			
 		} catch (UnknownHostException ex) {
 			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (FileNotFoundException ex) {
-			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (SocketException ex) {
-			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (IOException ex) {
-			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (TFTPErrorException ex) {
-			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		
 		//*/
+		//*
+		Window win = new Window();
+		try {		
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (InstantiationException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (IllegalAccessException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (UnsupportedLookAndFeelException ex) {
+			Logger.getLogger(TFTPClient.class.getName()).log(Level.SEVERE, null, ex);
+		}
 		
+		SwingUtilities.updateComponentTreeUI(win);
+		win.setVisible(true);
+		//*/
 	}
 }

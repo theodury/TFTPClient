@@ -9,12 +9,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.Observable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  *
  * @author Pierre
  */
-public class FileTransferManager {
+public class FileTransferManager extends Observable {
 
 	public static int SEND_COUNTER = 3;
 	
@@ -35,36 +35,32 @@ public class FileTransferManager {
 	}
 	//*
 
-	public int sendFile(String filepath, Protocol.Mode mode) throws FileNotFoundException, SocketException, IOException, TFTPErrorException {
-
-
-		//try {
-			
+	public void sendFile(String filepath, Protocol.Mode mode)  {
+		DataInputStream stream = null;
+		File file = null;
+		try {
+			//try {
 			//  --- ouverture du fichier --- //
-			File file = new File(filepath);
-			DataInputStream stream = new DataInputStream(new FileInputStream(file));
+			file = new File(filepath);
+			stream = new DataInputStream(new FileInputStream(file));
 			
 			// ouverture du socket et création des variables référentes
 			byte buffer[] = new byte[Protocol.BUFFER_SIZE];
 			byte data[];// = new byte[Protocol.BUFFER_SIZE];
 			int port = this._port;
 			short block;
+			
 			boolean sendBack;
 			
-			DatagramSocket socket = new DatagramSocket(69);
-
+			DatagramSocket socket = new DatagramSocket();
 			byte packet[] = new WriteRequestPacket(file.getName(), mode).getBytes();
-			
 			DatagramPacket dpOut = new DatagramPacket(packet, packet.length, this._destination, port);
 			DatagramPacket dpIn = new DatagramPacket(buffer, buffer.length);
-			
 			System.out.println(packet[0]);
 			System.out.println(packet[1]);
-			
 			// --- Envoie de la demande d'écriture --- //
 			socket.setSoTimeout(5000);
 			this.send(socket, dpOut, dpIn);
-			
 			Packet response = PacketFactory.toPacket(dpIn.getData());
 			// --- gestion des erreurs --- //
 			if(response.getOpCode() == Protocol.OpCode.ERR) {
@@ -79,6 +75,10 @@ public class FileTransferManager {
 				
 				port = dpIn.getPort();
 				block = ack.getBlockNumber();
+				
+				String message = "Transfert of '" + file.getName() + "' has begun";
+				this.setChanged();
+				this.notifyObservers(message);
 				
 				// --- Envoie des données --- //
 				int byteCount;
@@ -100,10 +100,10 @@ public class FileTransferManager {
 					sendBack = true;
 					do {
 						socket.setSoTimeout(500);
-						this.send(socket, dpOut, dpIn);
+						response = this.send(socket, dpOut, dpIn);
 						
 
-						response = PacketFactory.toPacket(dpIn.getData());
+						 //PacketFactory.toPacket(dpIn.getData());
 
 
 						if(response.getOpCode() == Protocol.OpCode.ERR) {
@@ -128,6 +128,12 @@ public class FileTransferManager {
 					System.out.println("\t" + byteCount);
 				} while(byteCount == Protocol.DATA_SIZE);
 			}
+			
+			String message = "Transfert of '" + file.getName() + "' has successfully completed.";
+			
+			this.setChanged();
+			this.notifyObservers(message);
+			
 			System.out.println();
 			/*System.out.println(packet[0]);
 			System.out.println(packet[1]);
@@ -135,28 +141,47 @@ public class FileTransferManager {
 			System.out.println(packet[3]);
 			System.out.println(packet[4]);
 			System.out.println(packet[5]);*/
-
 			System.out.println(dpIn.getData()[0]);
 			System.out.println(dpIn.getData()[1]);
 			System.out.println(dpIn.getData()[2]);
 			System.out.println(dpIn.getData()[3]);
-			
 			socket.close();
-			stream.close();
 			
-		/*} catch (SocketTimeoutException e){
+		} 
+		catch (FileNotFoundException ex) {
+			String message = "Error : " + ex.getMessage();
 			
-		} catch (SocketException e) {
-			//TODO: log
-		} catch (FileNotFoundException ex) {
-			Logger.getLogger(FileTransferManager.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (IOException ex) {
-			Logger.getLogger(FileTransferManager.class.getName()).log(Level.SEVERE, null, ex);
-		}*/
-		
-		
-		
-		return 0;
+			this.setChanged();
+			this.notifyObservers(message);
+		} 
+		catch (IOException ex) {
+			
+			String message = "Error : " + ex.getMessage();
+			
+			this.setChanged();
+			this.notifyObservers(message);
+		} 
+		catch (TFTPErrorException ex) {
+			
+			String message = "Transfert of '"+ file.getName() +"' - Error : " + ex.getErrCode() + " - " + ex.getMessage();
+			
+			this.setChanged();
+			this.notifyObservers(message);
+			
+		} catch (Exception ex) {
+			
+			String message = "Error : " + ex.getMessage();
+			
+			this.setChanged();
+			this.notifyObservers(message);
+		} finally {
+			
+			try {
+				stream.close();
+			} catch (IOException ex) {
+				//Logger.getLogger(FileTransferManager.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
 
 	}
 	//*/
@@ -183,8 +208,9 @@ public class FileTransferManager {
 		return 0;
 	}
 
-	private void send(DatagramSocket socket, DatagramPacket dpOut, DatagramPacket dpIn) throws IOException {
+	private Packet send(DatagramSocket socket, DatagramPacket dpOut, DatagramPacket dpIn) throws IOException, Exception {
 		int sendCounter = 0;
+		Packet packet = null;
 		boolean sendBack;
 		do {
 			sendBack = false;
@@ -192,15 +218,24 @@ public class FileTransferManager {
 			System.out.println(socket.getPort());
 			try {
 				socket.receive(dpIn);
-			}
-			catch(SocketTimeoutException exc){
+				
+				packet = PacketFactory.toPacket(dpIn.getData());
+				
+				if(packet == null) {
+					throw new Exception("Invalid OpCode.");
+				}
+			} 
+			catch (Exception ex) {
+				
 				++sendCounter;
 				if(sendCounter > FileTransferManager.SEND_COUNTER){
-					throw exc;
+					throw ex;
 				}
 				sendBack = true;
 			}
 		} while(sendBack);
+		
+		return packet;
 	}
 	
 	public InetAddress getDestination() {
