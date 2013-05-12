@@ -1,3 +1,6 @@
 *.dia~
 *.class
 /dist/
+build/*
+.gitignore
+nbproject/*

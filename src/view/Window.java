@@ -158,8 +158,7 @@ public final class Window extends JFrame implements Observer, ActionListener {
 		main.add(total, BorderLayout.WEST);
 		main.setBackground(Color.GRAY);
 
-		this.setMinimumSize(new Dimension(475, 300));
-		this.setMaximumSize(new Dimension(475, Integer.MAX_VALUE));
+		this.setMinimumSize(new Dimension(394, 300));
 		this.setContentPane(main);
 		this.setFocusable(true);
 	}
