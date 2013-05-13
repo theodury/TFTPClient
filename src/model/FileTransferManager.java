@@ -150,7 +150,6 @@ public class FileTransferManager extends Observable {
 
 			// --- Ouverture du socket et création des variables référentes --- //
 			byte buffer[] = new byte[Protocol.BUFFER_SIZE];
-			System.out.println("receiveFile (BUFFER_SIZE) :" + Protocol.BUFFER_SIZE);
 			byte data[] = null;
 			short block = 1;
 
@@ -179,28 +178,29 @@ public class FileTransferManager extends Observable {
 					throw new TFTPErrorException(err.getErrCode(), err.getErrMsg());
 				} // --- Réception des données --- //
 				else if (response.getOpCode() == Protocol.OpCode.DATA) {
-					message = "Transfer of '" + file.getName() + "' has begun.";
-					this.setChanged();
-					this.notifyObservers(message);
+					if (block == 1) {
+						message = "Transfer of '" + file.getName() + "' has begun.";
+						this.setChanged();
+						this.notifyObservers(message);
+					}
 
 					this._port = dpIn.getPort();
 					DataPacket datap = (DataPacket) response;
-					System.out.println("block = " + block + "\tgetBlockNumber() = " + datap.getBlockNumber());
 					if (block == datap.getBlockNumber()) {
-						++block;
 						data = datap.getData();
 
 						// --- Écriture du fichier --- //
-						stream.write(data);
+						stream.write(data, 0, dpIn.getLength() - 4);
 
 						// --- Envoi de l'acquittement --- //
 						packet = new AcknowledgmentPacket(block).getBytes();
 						dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
 						socket.send(dpOut);
+						++block;
 					}
 				}
-				System.out.println("receiveFile (data.length) :" + data.length);
-			} while (data.length == Protocol.DATA_SIZE);
+				System.out.println(data.length);
+			} while (dpIn.getLength() - 4 == Protocol.DATA_SIZE);
 
 			message = "Transfer of '" + file.getName() + "' has successfully completed.";
 			socket.close();
