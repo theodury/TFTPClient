@@ -29,6 +29,7 @@ public class FileTransferManager extends Observable {
 		this._destination = destination;
 		this._port = Protocol.PORT;
 	}
+	//*
 
 	public void sendFile(String filepath, Protocol.Mode mode) {
 		FileInputStream stream = null;
@@ -37,10 +38,9 @@ public class FileTransferManager extends Observable {
 		try {
 			// --- ouverture du fichier --- //
 			file = new File(filepath);
-			stream = /*new DataInputStream(*/ new FileInputStream(file)/*)*/;
-			//BufferedReader b = new BufferedReader(stream);
+			stream = new FileInputStream(file);
 
-			// --- ouverture du socket et création des variables référentes --- //
+			// ouverture du socket et création des variables référentes
 			byte buffer[] = new byte[Protocol.BUFFER_SIZE];
 			byte data[] = null;
 			short block;
@@ -58,15 +58,14 @@ public class FileTransferManager extends Observable {
 
 			// --- Envoi de la demande d'écriture --- //
 			socket.setSoTimeout(Protocol.SOCKET_TIMEOUT);
-			this.send(socket, dpOut, dpIn);
-			Packet response = PacketFactory.toPacket(dpIn.getData());
-			// --- Gestion des erreurs --- //
+			Packet response = this.send(socket, dpOut, dpIn);
+			// --- gestion des erreurs --- //
 			if (response.getOpCode() == Protocol.OpCode.ERR) {
 
 				ErrorPacket err = (ErrorPacket) response;
 
 				throw new TFTPErrorException(err.getErrCode(), err.getErrMsg());
-			} // --- Gestion de l'acquittement --- //
+			} // --- gestion de l'acquittement --- //
 			else if (response.getOpCode() == Protocol.OpCode.ACK) {
 				AcknowledgmentPacket ack = (AcknowledgmentPacket) response;
 
@@ -82,6 +81,7 @@ public class FileTransferManager extends Observable {
 				do {
 					// --- Lecture du fichier --- //
 					byteCount = stream.available();
+
 					if (byteCount > Protocol.DATA_SIZE) {
 						byteCount = Protocol.DATA_SIZE;
 					}
@@ -90,7 +90,9 @@ public class FileTransferManager extends Observable {
 					//stream.read(data, 0, byteCount);
 					this.read(stream, data, byteCount, mode);
 
-					packet = new DataPacket((short) (block + 1), data, mode).getBytes();
+					DataPacket dp = new DataPacket((short) (block + 1), data);
+					dp.setMode(mode);
+					packet = dp.getBytes();
 					dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
 
 					// --- Envoi --- //
@@ -98,20 +100,22 @@ public class FileTransferManager extends Observable {
 					do {
 						socket.setSoTimeout(Protocol.SOCKET_TIMEOUT);
 						response = this.send(socket, dpOut, dpIn);
-						//PacketFactory.toPacket(dpIn.getData());
 
 						if (response.getOpCode() == Protocol.OpCode.ERR) {
 							ErrorPacket err = (ErrorPacket) response;
 							throw new TFTPErrorException(err.getErrCode(), err.getErrMsg());
 						} else if (response.getOpCode() == Protocol.OpCode.ACK) {
-							ack = (AcknowledgmentPacket) PacketFactory.toPacket(dpIn.getData());
+//							ack = (AcknowledgmentPacket)PacketFactory.toPacket(dpIn.getData());
+							ack = (AcknowledgmentPacket) response;
 							if (ack.getBlockNumber() == block + 1) {
 								sendBack = false;
 							}
 						}
+
 					} while (sendBack);
 
 					block = ack.getBlockNumber();
+
 				} while (byteCount == Protocol.DATA_SIZE);
 			}
 
@@ -132,6 +136,7 @@ public class FileTransferManager extends Observable {
 				//Logger.getLogger(FileTransferManager.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
+
 	}
 
 	public int receiveFile(String localFilePath, String serverFilename, Protocol.Mode mode) {
@@ -224,8 +229,11 @@ public class FileTransferManager extends Observable {
 		do {
 			sendBack = false;
 			socket.send(dpOut);
+
 			try {
+				System.out.println("ok");
 				socket.receive(dpIn);
+				System.out.println("ko");
 
 				packet = PacketFactory.toPacket(dpIn.getData());
 

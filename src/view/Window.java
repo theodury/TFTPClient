@@ -155,12 +155,13 @@ public final class Window extends JFrame implements Observer, ActionListener {
 
 		JPanel main = new JPanel();
 		main.setLayout(new BorderLayout());
-		main.add(total, BorderLayout.WEST);
+		main.add(total, BorderLayout.CENTER);
 		main.setBackground(Color.GRAY);
 
 		this.setMinimumSize(new Dimension(394, 300));
 		this.setContentPane(main);
 		this.setFocusable(true);
+		//this.setResizable(false);
 	}
 
 	@Override
@@ -192,35 +193,34 @@ public final class Window extends JFrame implements Observer, ActionListener {
 				} else {
 					test = false;
 				}
-			} while(test);
-		} else if(e.getSource() == _btn_Receive) {
-			if(_txt_PathReceive.getText().length() == 0) {
+			} while (test);
+		} else if (e.getSource() == _btn_Receive) {
+			if (_txt_PathReceive.getText().length() == 0) {
 				this.write("Vous devez choisir un fichier à envoyer.");
 				return;
 			}
-			if(_txt_PathServerReceive.getText().length() == 0) {
+			if (_txt_PathServerReceive.getText().length() == 0) {
 				this.write("Vous devez la destination du fichier.");
 				return;
 			}
-			if(!Window.validIP(_txt_IPReceive.getText())) {
+			if (!Window.validIP(_txt_IPReceive.getText())) {
 				this.write("L'adresse IP n'est pas valide.");
 				return;
 			}
 			_controller.receive(_txt_PathReceive.getText(), _txt_PathServerReceive.getText(), _txt_IPReceive.getText());
-//			_controller.send(_txt_PathSend.getText(), _txt_IPSend.getText());
-		} else if(e.getSource() == _btn_Send) {
-			if(_txt_PathSend.getText().length() == 0) {
+		} else if (e.getSource() == _btn_Send) {
+			if (_txt_PathSend.getText().length() == 0) {
 				this.write("Vous devez choisir un fichier à envoyer.");
 				return;
 			}
 			/*
-			if (_txt_PathServerSend.getText().length() == 0) {
-				this.write("Vous devez compléter la localisation.");
-				this.write(_txt_PathServerSend.getText());
-				return;
-			}
-			//*/
-			if(!Window.validIP(_txt_IPSend.getText())) {
+			 if (_txt_PathServerSend.getText().length() == 0) {
+			 this.write("Vous devez compléter la localisation.");
+			 this.write(_txt_PathServerSend.getText());
+			 return;
+			 }
+			 //*/
+			if (!Window.validIP(_txt_IPSend.getText())) {
 				this.write("L'adresse IP n'est pas valide.");
 				return;
 			}
@@ -252,13 +252,11 @@ public final class Window extends JFrame implements Observer, ActionListener {
 
 	@Override
 	public void update(Observable o, Object arg) {
-		if(o instanceof FileTransferManager) {
-			String message = (String)arg;
-			
+		if (o instanceof FileTransferManager) {
+			String message = (String) arg;
+
 			this.write(message);
-			
+
 		}
 	}
-	
-	
 }
