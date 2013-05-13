@@ -4,11 +4,14 @@
  */
 package model;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -36,13 +39,14 @@ public class FileTransferManager extends Observable {
 	//*
 
 	public void sendFile(String filepath, Protocol.Mode mode)  {
-		DataInputStream stream = null;
+		FileInputStream stream = null;
 		File file = null;
 		try {
 			//try {
 			//  --- ouverture du fichier --- //
 			file = new File(filepath);
-			stream = new DataInputStream(new FileInputStream(file));
+			stream = /*new DataInputStream(*/new FileInputStream(file)/*)*/;
+			//BufferedReader b = new BufferedReader(stream);
 			
 			// ouverture du socket et création des variables référentes
 			byte buffer[] = new byte[Protocol.BUFFER_SIZE];
@@ -94,7 +98,8 @@ public class FileTransferManager extends Observable {
 					}
 					data = new byte[byteCount];
 
-					stream.read(data, 0, byteCount);
+					//stream.read(data, 0, byteCount);
+					this.read(stream, data, byteCount, mode);
 
 					DataPacket dp = new DataPacket((short)(block + 1), data);
 					dp.setMode(mode);
@@ -243,5 +248,26 @@ public class FileTransferManager extends Observable {
 
 	public void setDestination(InetAddress destination) {
 		this._destination = destination;
+	}
+	
+	
+	public void read(InputStream stream, byte[] data, int byteCount, Protocol.Mode mode) throws IOException {
+		if(mode == Protocol.Mode.OCTET) {
+			stream.read(data, 0, byteCount);
+		}
+		else if (mode == Protocol.Mode.NETASCII) {
+			
+			//byte[] buf = new byte[byteCount/2];
+			//char[] cbuf = new char[byteCount/2];
+			
+			/*stream.read(buf, 0, byteCount/2);
+			data = new String(buf, "UTF-8").getBytes("UTF-8);*/
+			stream.read(data, 0, byteCount);
+			/*InputStreamReader ipsr=new InputStreamReader(stream);
+			BufferedReader br=new BufferedReader(ipsr);
+			br.read(cbuf, 0, byteCount/2);
+			String str = new String(cbuf);
+			data = str.getBytes("US-ASCII");*/
+		}
 	}
 }
