@@ -4,17 +4,16 @@
  */
 package model;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.Observable;
 
 /**
@@ -22,7 +21,7 @@ import java.util.Observable;
  * @author Pierre
  */
 public class FileTransferManager extends Observable {
-	
+
 	private int _port;
 	private InetAddress _destination;
 
@@ -31,70 +30,69 @@ public class FileTransferManager extends Observable {
 		this._port = Protocol.PORT;
 	}
 
-	public void sendFile(String filepath, Protocol.Mode mode)  {
-		DataInputStream stream = null;
+	public void sendFile(String filepath, Protocol.Mode mode) {
+		FileInputStream stream = null;
 		File file = null;
 		String message = null;
 		try {
 			// --- ouverture du fichier --- //
 			file = new File(filepath);
-			stream = new DataInputStream(new FileInputStream(file));
-			
+			stream = /*new DataInputStream(*/ new FileInputStream(file)/*)*/;
+			//BufferedReader b = new BufferedReader(stream);
+
 			// --- ouverture du socket et création des variables référentes --- //
 			byte buffer[] = new byte[Protocol.BUFFER_SIZE];
 			byte data[] = null;
 			short block;
-			
+
 			boolean sendBack;
-			
+
 			DatagramSocket socket = new DatagramSocket();
 			byte packet[] = new WriteRequestPacket(file.getName(), mode).getBytes();
 			DatagramPacket dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
 			DatagramPacket dpIn = new DatagramPacket(buffer, buffer.length);
-//			System.out.println(packet[0]);
-//			System.out.println(packet[1]);
-			
+
 			message = "Transfer of '" + file.getName() + "'.";
 			this.setChanged();
 			this.notifyObservers(message);
-			
+
 			// --- Envoi de la demande d'écriture --- //
 			socket.setSoTimeout(Protocol.SOCKET_TIMEOUT);
 			this.send(socket, dpOut, dpIn);
 			Packet response = PacketFactory.toPacket(dpIn.getData());
 			// --- Gestion des erreurs --- //
-			if(response.getOpCode() == Protocol.OpCode.ERR) {
-				
-				ErrorPacket err = (ErrorPacket)response;
-				
+			if (response.getOpCode() == Protocol.OpCode.ERR) {
+
+				ErrorPacket err = (ErrorPacket) response;
+
 				throw new TFTPErrorException(err.getErrCode(), err.getErrMsg());
 			} // --- Gestion de l'acquittement --- //
-			else if(response.getOpCode() == Protocol.OpCode.ACK) {
-				AcknowledgmentPacket ack = (AcknowledgmentPacket)response;
-				
+			else if (response.getOpCode() == Protocol.OpCode.ACK) {
+				AcknowledgmentPacket ack = (AcknowledgmentPacket) response;
+
 				this._port = dpIn.getPort();
 				block = ack.getBlockNumber();
-				
+
 				message = "Transfer of '" + file.getName() + "' has begun.";
 				this.setChanged();
 				this.notifyObservers(message);
-				
+
 				// --- Envoi des données --- //
 				int byteCount;
 				do {
 					// --- Lecture du fichier --- //
 					byteCount = stream.available();
-//					System.out.println(byteCount);
-					if(byteCount > Protocol.DATA_SIZE) {
+					if (byteCount > Protocol.DATA_SIZE) {
 						byteCount = Protocol.DATA_SIZE;
 					}
 					data = new byte[byteCount];
 
-					stream.read(data, 0, byteCount);
+					//stream.read(data, 0, byteCount);
+					this.read(stream, data, byteCount, mode);
 
-					packet = new DataPacket((short)(block + 1), data).getBytes();
+					packet = new DataPacket((short) (block + 1), data, mode).getBytes();
 					dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
-					
+
 					// --- Envoi --- //
 					sendBack = true;
 					do {
@@ -102,49 +100,29 @@ public class FileTransferManager extends Observable {
 						response = this.send(socket, dpOut, dpIn);
 						//PacketFactory.toPacket(dpIn.getData());
 
-						if(response.getOpCode() == Protocol.OpCode.ERR) {
-							ErrorPacket err = (ErrorPacket)response;
+						if (response.getOpCode() == Protocol.OpCode.ERR) {
+							ErrorPacket err = (ErrorPacket) response;
 							throw new TFTPErrorException(err.getErrCode(), err.getErrMsg());
-						}
-						else if (response.getOpCode() == Protocol.OpCode.ACK){
-							ack = (AcknowledgmentPacket)PacketFactory.toPacket(dpIn.getData());
-							if (ack.getBlockNumber() == block+1) {
+						} else if (response.getOpCode() == Protocol.OpCode.ACK) {
+							ack = (AcknowledgmentPacket) PacketFactory.toPacket(dpIn.getData());
+							if (ack.getBlockNumber() == block + 1) {
 								sendBack = false;
 							}
 						}
-						
-//						System.out.println(ack.getBlockNumber());
-//						System.out.println(block+1);
-					} while(sendBack);
-					
+					} while (sendBack);
+
 					block = ack.getBlockNumber();
-//					System.out.println("\t" + byteCount);
-				} while(byteCount == Protocol.DATA_SIZE);
+				} while (byteCount == Protocol.DATA_SIZE);
 			}
-			
+
 			message = "Transfer of '" + file.getName() + "' has successfully completed.";
-			/*
-			this.setChanged();
-			this.notifyObservers(message);
-			System.out.println();
-			System.out.println(packet[0]);
-			System.out.println(packet[1]);
-			System.out.println(packet[2]);
-			System.out.println(packet[3]);
-			System.out.println(packet[4]);
-			System.out.println(packet[5]);
-			System.out.println(dpIn.getData()[0]);
-			System.out.println(dpIn.getData()[1]);
-			System.out.println(dpIn.getData()[2]);
-			System.out.println(dpIn.getData()[3]);
-			//*/
 			socket.close();
 		} catch (FileNotFoundException ex) {
 			message = "Error : " + ex.getMessage();
 		} catch (TFTPErrorException ex) {
-			message = "Transfer of '"+ file.getName() +"' - Error : " + ex.getErrCode() + " - " + ex.getMessage();
+			message = "Transfer of '" + file.getName() + "' - Error : " + ex.getErrCode() + " - " + ex.getMessage();
 		} catch (Exception ex) {
-			message = "Transfer of '"+ file.getName() +"' - Error : " + ex.getMessage();
+			message = "Transfer of '" + file.getName() + "' - Error : " + ex.getMessage();
 		} finally {
 			this.setChanged();
 			this.notifyObservers(message);
@@ -170,12 +148,12 @@ public class FileTransferManager extends Observable {
 			System.out.println("receiveFile (BUFFER_SIZE) :" + Protocol.BUFFER_SIZE);
 			byte data[] = null;
 			short block = 1;
-		
+
 			DatagramSocket socket = new DatagramSocket();
 			byte packet[] = new ReadRequestPacket(serverFilename, mode).getBytes();
 			DatagramPacket dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
 			DatagramPacket dpIn = new DatagramPacket(buffer, buffer.length);
-			
+
 			message = "Transfer of '" + file.getName() + "'.";
 			this.setChanged();
 			this.notifyObservers(message);
@@ -183,27 +161,27 @@ public class FileTransferManager extends Observable {
 			// --- Envoi de la demande de lecture --- //
 			socket.setSoTimeout(Protocol.SOCKET_TIMEOUT);
 			socket.send(dpOut);
-			
+
 			do {
 				socket.receive(dpIn);
 				Packet response = PacketFactory.toPacket(dpIn.getData());
 				// --- Gestion des erreurs --- //
-				if(response == null) {
+				if (response == null) {
 					throw new Exception("Invalid OpCode.");
 				}
-				if(response.getOpCode() == Protocol.OpCode.ERR) {
-					ErrorPacket err = (ErrorPacket)response;
+				if (response.getOpCode() == Protocol.OpCode.ERR) {
+					ErrorPacket err = (ErrorPacket) response;
 					throw new TFTPErrorException(err.getErrCode(), err.getErrMsg());
 				} // --- Réception des données --- //
-				else if(response.getOpCode() == Protocol.OpCode.DATA) {
+				else if (response.getOpCode() == Protocol.OpCode.DATA) {
 					message = "Transfer of '" + file.getName() + "' has begun.";
 					this.setChanged();
 					this.notifyObservers(message);
-					
+
 					this._port = dpIn.getPort();
-					DataPacket datap = (DataPacket)response;
+					DataPacket datap = (DataPacket) response;
 					System.out.println("block = " + block + "\tgetBlockNumber() = " + datap.getBlockNumber());
-					if(block == datap.getBlockNumber()) {
+					if (block == datap.getBlockNumber()) {
 						++block;
 						data = datap.getData();
 
@@ -217,16 +195,16 @@ public class FileTransferManager extends Observable {
 					}
 				}
 				System.out.println("receiveFile (data.length) :" + data.length);
-			} while(data.length == Protocol.DATA_SIZE);
-			
+			} while (data.length == Protocol.DATA_SIZE);
+
 			message = "Transfer of '" + file.getName() + "' has successfully completed.";
 			socket.close();
-		} catch(FileNotFoundException ex) {
+		} catch (FileNotFoundException ex) {
 			message = "Error : " + ex.getMessage();
 		} catch (TFTPErrorException ex) {
-			message = "Transfer of '"+ file.getName() +"' - Error : " + ex.getErrCode() + " - " + ex.getMessage();
+			message = "Transfer of '" + file.getName() + "' - Error : " + ex.getErrCode() + " - " + ex.getMessage();
 		} catch (Exception ex) {
-			message = "Transfer of '"+ file.getName() +"' - Error : " + ex.getMessage();
+			message = "Transfer of '" + file.getName() + "' - Error : " + ex.getMessage();
 		} finally {
 			this.setChanged();
 			this.notifyObservers(message);
@@ -246,34 +224,51 @@ public class FileTransferManager extends Observable {
 		do {
 			sendBack = false;
 			socket.send(dpOut);
-//			System.out.println(socket.getPort());
 			try {
 				socket.receive(dpIn);
-				
+
 				packet = PacketFactory.toPacket(dpIn.getData());
-				
-				if(packet == null) {
+
+				if (packet == null) {
 					throw new Exception("Invalid OpCode.");
 				}
-			} 
-			catch (Exception ex) {
-				
+			} catch (Exception ex) {
+
 				++sendCounter;
-				if(sendCounter > Protocol.SEND_COUNTER){
+				if (sendCounter > Protocol.SEND_COUNTER) {
 					throw ex;
 				}
 				sendBack = true;
 			}
-		} while(sendBack);
-		
+		} while (sendBack);
+
 		return packet;
 	}
-	
+
 	public InetAddress getDestination() {
 		return _destination;
 	}
 
 	public void setDestination(InetAddress destination) {
 		this._destination = destination;
+	}
+
+	public void read(InputStream stream, byte[] data, int byteCount, Protocol.Mode mode) throws IOException {
+		if (mode == Protocol.Mode.OCTET) {
+			stream.read(data, 0, byteCount);
+		} else if (mode == Protocol.Mode.NETASCII) {
+
+			//byte[] buf = new byte[byteCount/2];
+			//char[] cbuf = new char[byteCount/2];
+
+			/*stream.read(buf, 0, byteCount/2);
+			 data = new String(buf, "UTF-8").getBytes("UTF-8);*/
+			stream.read(data, 0, byteCount);
+			/*InputStreamReader ipsr=new InputStreamReader(stream);
+			 BufferedReader br=new BufferedReader(ipsr);
+			 br.read(cbuf, 0, byteCount/2);
+			 String str = new String(cbuf);
+			 data = str.getBytes("US-ASCII");*/
+		}
 	}
 }
