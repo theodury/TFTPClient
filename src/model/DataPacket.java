@@ -45,6 +45,7 @@ public class DataPacket extends AcknowledgmentPacket {
 	}
 
 	public byte[] getData() {
+		System.out.println("getData (data.length) :" + _data.length);
 		return _data;
 	}
 

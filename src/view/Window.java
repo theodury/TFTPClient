@@ -178,8 +178,8 @@ public final class Window extends JFrame implements Observer, ActionListener {
 			do {
 				if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 					String path = fc.getSelectedFile().getPath();
-					File toto = new File(path);
-					if (!toto.exists()) {
+					File file = new File(path);
+					if (!file.exists()) {
 						_txt_PathReceive.setText(path);
 						test = false;
 					} else if (JOptionPane.showConfirmDialog(null, "Ce fichier existe déjà, l'écraser?", "Confirmer l'écrasement", JOptionPane.OK_CANCEL_OPTION) == 0) {
@@ -192,23 +192,39 @@ public final class Window extends JFrame implements Observer, ActionListener {
 				} else {
 					test = false;
 				}
-			} while (test);
-		} else if (e.getSource() == _btn_Receive) {
-		} else if (e.getSource() == _btn_Send) {
-			if (_txt_PathSend.getText().length() != 0) {
-				//if (_txt_PathServerSend.getText().length() != 0) {
-					if (Window.validIP(_txt_IPSend.getText())) {
-						_controller.send(_txt_PathSend.getText(), _txt_IPSend.getText());
-					} else {
-						this.write("L'adresse IP n'est pas valide.");
-					}
-				//} else {
-				//	this.write("Vous devez compléter la localisation.");
-					//this.write(_txt_PathServerSend.getText());
-				//}
-			} else {
+			} while(test);
+		} else if(e.getSource() == _btn_Receive) {
+			if(_txt_PathReceive.getText().length() == 0) {
 				this.write("Vous devez choisir un fichier à envoyer.");
+				return;
 			}
+			if(_txt_PathServerReceive.getText().length() == 0) {
+				this.write("Vous devez la destination du fichier.");
+				return;
+			}
+			if(!Window.validIP(_txt_IPReceive.getText())) {
+				this.write("L'adresse IP n'est pas valide.");
+				return;
+			}
+			_controller.receive(_txt_PathReceive.getText(), _txt_PathServerReceive.getText(), _txt_IPReceive.getText());
+//			_controller.send(_txt_PathSend.getText(), _txt_IPSend.getText());
+		} else if(e.getSource() == _btn_Send) {
+			if(_txt_PathSend.getText().length() == 0) {
+				this.write("Vous devez choisir un fichier à envoyer.");
+				return;
+			}
+			/*
+			if (_txt_PathServerSend.getText().length() == 0) {
+				this.write("Vous devez compléter la localisation.");
+				this.write(_txt_PathServerSend.getText());
+				return;
+			}
+			//*/
+			if(!Window.validIP(_txt_IPSend.getText())) {
+				this.write("L'adresse IP n'est pas valide.");
+				return;
+			}
+			_controller.send(_txt_PathSend.getText(), _txt_IPSend.getText());
 		}
 	}
 

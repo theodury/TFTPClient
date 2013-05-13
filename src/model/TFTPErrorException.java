@@ -10,7 +10,7 @@ package model;
  */
 public class TFTPErrorException extends Exception {
 
-	private short _errCode;
+	private Protocol.ErrCode _errCode;
 	
 	/**
 	 * Creates a new instance of
@@ -25,12 +25,12 @@ public class TFTPErrorException extends Exception {
 	 *
 	 * @param msg the detail message.
 	 */
-	public TFTPErrorException(short errCode, String msg) {
+	public TFTPErrorException(Protocol.ErrCode errCode, String msg) {
 		super(msg);
 		this._errCode = errCode;
 	}
 	
-	public short getErrCode() {
+	public Protocol.ErrCode getErrCode() {
 		return _errCode;
 	}
 }

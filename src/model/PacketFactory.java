@@ -30,7 +30,7 @@ public class PacketFactory {
 			// Flemme de faire ça tout de suite
 		}
 		else if(opCode == Protocol.OpCode.DATA.v()) {
-			
+			System.out.println("factory (buffer.length) : " + buffer.length);
 			short block = Packet.getCode(buffer[2], buffer[3]);//buffer[2] * 256 + buffer[3];
 			
 			packet = new DataPacket(block, Arrays.copyOfRange(buffer, 4, buffer.length));
