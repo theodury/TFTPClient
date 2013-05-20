@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package model;
 
 import java.io.DataOutputStream;
@@ -29,7 +25,6 @@ public class FileTransferManager extends Observable {
 		this._destination = destination;
 		this._port = Protocol.PORT;
 	}
-	//*
 
 	public void sendFile(String filepath, Protocol.Mode mode) {
 		FileInputStream stream = null;
@@ -105,7 +100,6 @@ public class FileTransferManager extends Observable {
 							ErrorPacket err = (ErrorPacket) response;
 							throw new TFTPErrorException(err.getErrCode(), err.getErrMsg());
 						} else if (response.getOpCode() == Protocol.OpCode.ACK) {
-//							ack = (AcknowledgmentPacket)PacketFactory.toPacket(dpIn.getData());
 							ack = (AcknowledgmentPacket) response;
 							if (ack.getBlockNumber() == block + 1) {
 								sendBack = false;
@@ -151,6 +145,7 @@ public class FileTransferManager extends Observable {
 			// --- Ouverture du socket et création des variables référentes --- //
 			byte buffer[] = new byte[Protocol.BUFFER_SIZE];
 			byte data[] = null;
+			int dataLength = Protocol.DATA_SIZE;
 			short block = 1;
 
 			DatagramSocket socket = new DatagramSocket();
@@ -186,21 +181,22 @@ public class FileTransferManager extends Observable {
 
 					this._port = dpIn.getPort();
 					DataPacket datap = (DataPacket) response;
+					dataLength = dpIn.getLength() - (Protocol.OPCODE_SIZE + Protocol.BLOCKNUM_SIZE);
 					if (block == datap.getBlockNumber()) {
 						data = datap.getData();
 
 						// --- Écriture du fichier --- //
-						stream.write(data, 0, dpIn.getLength() - 4);
+						stream.write(data, 0, dataLength);
 
-						// --- Envoi de l'acquittement --- //
-						packet = new AcknowledgmentPacket(block).getBytes();
-						dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
-						socket.send(dpOut);
-						++block;
 					}
+					// --- Envoi de l'acquittement --- //
+					packet = new AcknowledgmentPacket(block).getBytes();
+					dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
+					socket.send(dpOut);
+					++block;
 				}
 				System.out.println(data.length);
-			} while (dpIn.getLength() - 4 == Protocol.DATA_SIZE);
+			} while (dataLength == Protocol.DATA_SIZE);
 
 			message = "Transfer of '" + file.getName() + "' has successfully completed.";
 			socket.close();
