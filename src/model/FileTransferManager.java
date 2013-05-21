@@ -187,13 +187,12 @@ public class FileTransferManager extends Observable {
 
 						// --- Écriture du fichier --- //
 						stream.write(data, 0, dataLength);
-
+						++block;
 					}
 					// --- Envoi de l'acquittement --- //
 					packet = new AcknowledgmentPacket(block).getBytes();
 					dpOut = new DatagramPacket(packet, packet.length, this._destination, this._port);
 					socket.send(dpOut);
-					++block;
 				}
 				System.out.println(data.length);
 			} while (dataLength == Protocol.DATA_SIZE);
